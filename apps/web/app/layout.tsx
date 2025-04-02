@@ -1,30 +1,23 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
 import "@workspace/ui/globals.css"
-import { Providers } from "@/components/providers"
 
-const fontSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans",
-})
+const inter = Inter({ subsets: ['latin'] });
 
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
+export const metadata: Metadata = {
+  title: 'LeetCoach - Your AI Companion for LeetCode',
+  description: 'Master LeetCode problems with personalized AI guidance and support.',
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}
-      >
-        <Providers>{children}</Providers>
-      </body>
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
     </html>
-  )
+  );
 }
