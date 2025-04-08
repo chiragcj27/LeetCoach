@@ -10,7 +10,7 @@ import { cleanProblemData, extractProblemData, extractUserCode, waitForEditor } 
 const llm = new ChatGroq({
     model: "llama-3.3-70b-versatile",
     temperature: 0,
-    apiKey: "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"
+    apiKey: ""
   });
 
 
