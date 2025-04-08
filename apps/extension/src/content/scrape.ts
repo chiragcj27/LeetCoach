@@ -1,13 +1,18 @@
 console.log("[LeetCoach] Content script loaded!");
 
 // Function to extract problem data
-const extractProblemData = (): string => {
+export const extractProblemData = (): string => {
     const metaTag = document.querySelector('meta[name=description]');
     return metaTag ? metaTag.getAttribute('content') || "[Error] No problem description found!" : "[Error] Meta Tag not found!";
 };
 
+export const cleanProblemData = (data: string): string => {
+    const prefix = "Can you solve this real interview question? ";
+    return data.startsWith(prefix) ? data.slice(prefix.length) : data;
+};
+
 // Function to wait for the code editor to appear
-const waitForEditor = (callback: () => void) => {
+export const waitForEditor = (callback: () => void) => {
     const observer = new MutationObserver((_, obs) => {
         const codeLines = document.querySelectorAll(".view-line");
         if (codeLines.length > 0) {
@@ -21,7 +26,7 @@ const waitForEditor = (callback: () => void) => {
 };
 
 // Function to extract user code dynamically (returns a Promise)
-const extractUserCode = (): Promise<string> => {
+export const extractUserCode = (): Promise<string> => {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
             const codeLines = document.querySelectorAll(".view-line");
@@ -48,9 +53,10 @@ const extractUserCode = (): Promise<string> => {
 };
 
 // Function to save extracted data
-const saveData = async () => {
+export const saveData = async () => {
     try {
-        const problemData = extractProblemData();
+        const rawproblemData = extractProblemData();
+        const problemData = cleanProblemData(rawproblemData);
         const userCode = await extractUserCode(); // Wait for async function
 
         const extractedData = {

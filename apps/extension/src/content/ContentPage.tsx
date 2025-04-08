@@ -1,11 +1,13 @@
-import { Button } from "@workspace/ui/components/button";
+import React from "react";
+import { LeetCoachProvider } from "../contexts/LeetCoachContext";
+import { ChatInterface } from "../components/ChatInterface";
 
-export default function ContentPage(){
-    return (
-        <>
-            <div className="fixed bottom-4 right-4 z-50 bg-amber-300">
-                <Button>LeetCoach</Button>
-            </div>
-        </>
-    );
-}
+export const ContentPage: React.FC = () => {
+  return (
+    <LeetCoachProvider>
+      <div className="fixed bottom-4 right-4 w-80 z-50">
+        <ChatInterface />
+      </div>
+    </LeetCoachProvider>
+  );
+};
