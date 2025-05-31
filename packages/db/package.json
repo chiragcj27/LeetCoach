@@ -1,0 +1,29 @@
+{
+  "name": "@leetcoach/db",
+  "version": "1.0.0",
+  "description": "MongoDB shared package for LeetCoach",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "test": "jest"
+  },
+  "keywords": ["mongodb", "database", "leetcoach"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongoose": "^8.2.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@types/dotenv": "^8.2.0",
+    "typescript": "^5.3.3",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0"
+  }
+}
