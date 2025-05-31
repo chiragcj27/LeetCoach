@@ -64,7 +64,7 @@ const HeroSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:grid lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-6 xl:col-span-5">
-            <div className="inline-flex items-center px-4 py-2 bg-leetcode-yellow/20 border border-leetcode-yellow rounded-full text-sm font-medium text-leetcode-black mb-6">
+            <div className="inline-flex items-center px-4 py-2 bg-leetcode-yellow border border-black-500 rounded-full text-sm font-medium text-leetcode-black mb-6">
               <Percent className="h-4 w-4 mr-2" />
               30% OFF - Early Bird Special!
             </div>
@@ -104,11 +104,11 @@ const HeroSection = () => {
                     </div>
                   ))}
                   <div className="h-10 w-10 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-600">+2K</span>
+                    <span className="text-sm font-medium text-gray-600">+20</span>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">2,000+ developers on waiting list</p>
+                  <p className="text-sm font-semibold text-gray-900">20+ Leetcoders on waiting list</p>
                   <p className="text-xs text-gray-500">Join now for exclusive early access</p>
                 </div>
               </div>
