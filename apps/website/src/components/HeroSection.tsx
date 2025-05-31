@@ -66,7 +66,7 @@ const HeroSection = () => {
           <div className="lg:col-span-6 xl:col-span-5">
             <div className="inline-flex items-center px-4 py-2 bg-leetcode-yellow border border-black-500 rounded-full text-sm font-medium text-leetcode-black mb-6">
               <Percent className="h-4 w-4 mr-2" />
-              30% OFF - Early Bird Special!
+              25% OFF - Early Bird Special!
             </div>
             <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
               Your Personal 
@@ -90,7 +90,7 @@ const HeroSection = () => {
                 ) : session ? (
                   "Join Waitlist"
                 ) : (
-                  "Join Waiting List - 30% OFF"
+                  "Join Waiting List - 25% OFF"
                 )} 
                 {!isOnWaitlist && !isJoining && <ArrowRight className="ml-2 h-5 w-5" />}
               </Button>
