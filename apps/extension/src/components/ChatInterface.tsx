@@ -1,117 +1,256 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useLeetCoach } from "../contexts/LeetCoachContext";
-import { parseCodeBlocks } from "../utils/codeDetection";
-import { SendHorizonal, ChevronDown, ChevronUp } from "lucide-react";
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@workspace/ui/components/button';
+import { Card } from '@workspace/ui/components/card';
+import { ScrollArea } from '@workspace/ui/components/scroll-area';
+import { Input } from '@workspace/ui/components/input';
+import { Send, Lightbulb, Code, CheckCircle } from 'lucide-react';
 
-export const ChatInterface: React.FC = () => {
-  const { messages, sendMessage, isLoading, initializeChat } = useLeetCoach();
-  const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(true);
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  type: 'chat' | 'help' | 'hint' | 'pseudocode' | 'solution';
+  buttons?: {
+    text: string;
+    action: () => void;
+    icon?: React.ReactNode;
+  }[];
+}
 
+interface HelpData {
+  userSituation: string;
+  progressiveHints: string[];
+  pseudoCode: string;
+  solution: string;
+  bruteForce?: {
+    userSituation: string;
+    progressiveHints: string[];
+    pseudoCode: string;
+    solution: string;
+  };
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
+
+interface ChatInterfaceProps {
+  onTakeHelp: () => Promise<ApiResponse<HelpData>>;
+  onSendMessage: (message: string) => Promise<ApiResponse<string>>;
+  isLoading: boolean;
+}
+
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+  onTakeHelp,
+  onSendMessage,
+  isLoading
+}) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [helpData, setHelpData] = useState<HelpData | null>(null);
+  const [chatEnabled, setChatEnabled] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messages.length === 0) {
-      initializeChat();
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [initializeChat, messages.length]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMessage = input;
-    setInput("");
-    await sendMessage(userMessage);
+  const handleTakeHelp = async () => {
+    setMessages(prev => [...prev, { role: 'user', content: 'Take Help', type: 'help' }]);
+    try {
+      const response = await onTakeHelp();
+      if (response.success) {
+        setHelpData(response.data);
+        // Add user situation message
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: response.data.userSituation,
+          type: 'help',
+          buttons: [{
+            text: 'Get First Hint',
+            action: () => handleShowHint(0),
+            icon: <Lightbulb className="h-4 w-4 mr-2" /> as unknown as React.ReactNode
+          }]
+        }]);
+      }
+    } catch (error) {
+      console.error('Error getting help:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error while trying to help. Please try again.',
+        type: 'help'
+      }]);
+    }
   };
 
-  const toggleVisibility = () => {
-    setIsVisible((prev) => !prev);
+  const handleShowHint = (index: number) => {
+    if (!helpData || !helpData.progressiveHints) return;
+
+    const hint = helpData.progressiveHints[index];
+
+    const buttons: Message['buttons'] = [];
+    
+    // Add next hint button if there are more hints
+    if (index < helpData.progressiveHints.length - 1) {
+      buttons.push({
+        text: 'Next Hint',
+        action: () => handleShowHint(index + 1),
+        icon: <Lightbulb className="h-4 w-4 mr-2" /> as unknown as React.ReactNode
+      });
+    } else {
+      // If this is the last hint, show pseudocode button
+      buttons.push({
+        text: 'Show Pseudocode',
+        action: handleShowPseudocode,
+        icon: <Code className="h-4 w-4 mr-2" /> as unknown as React.ReactNode
+      });
+    }
+
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: hint,
+      type: 'hint',
+      buttons
+    }]);
   };
 
-  const createMarkup = (content: string) => {
-    const processedContent = parseCodeBlocks(content);
-    return { __html: processedContent };
+  const handleShowPseudocode = () => {
+    if (!helpData) return;
+
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: helpData.pseudoCode,
+      type: 'pseudocode',
+      buttons: [{
+        text: 'Show Solution',
+        action: handleShowSolution,
+        icon: <CheckCircle className="h-4 w-4 mr-2" /> as unknown as React.ReactNode
+      }]
+    }]);
+  };
+
+  const handleShowSolution = () => {
+    if (!helpData) return;
+
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: helpData.solution,
+      type: 'solution'
+    }]);
+
+    // Enable chat after showing solution
+    setChatEnabled(true);
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: "Now that you've seen the solution, feel free to ask any questions about it or the problem in general!",
+      type: 'chat'
+    }]);
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || !chatEnabled) return;
+
+    const userMessage = inputMessage;
+    setInputMessage('');
+    setMessages(prev => [...prev, { role: 'user', content: userMessage, type: 'chat' }]);
+
+    try {
+      const response = await onSendMessage(userMessage);
+      if (response.success) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: response.data,
+          type: 'chat'
+        }]);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        type: 'chat'
+      }]);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   return (
-    <div className="flex flex-col h-[32rem] w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg border transition-all duration-300 ease-in-out overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b flex justify-between items-center bg-yellow-400">
-        <span className="text-gray-800 font-semibold text-base">
-          LeetCoach Assistant
-        </span>
-        <button
-          onClick={toggleVisibility}
-          className="text-gray-500 hover:text-gray-800 transition-colors"
-        >
-          {isVisible ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
-        </button>
+    <Card className="w-[400px] h-[600px] flex flex-col bg-background border rounded-lg shadow-lg">
+      <div className="p-4 border-b">
+        <h2 className="text-xl font-bold">LeetCoach AI Assistant</h2>
       </div>
-
-      {/* Body */}
-      {isVisible && (
-        <>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white transition-all">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm break-words whitespace-pre-wrap shadow-sm transition-all duration-300 ${
-                    msg.role === "user"
-                      ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-gray-100 text-gray-800 rounded-bl-none"
-                  }`}
-                  dangerouslySetInnerHTML={createMarkup(msg.content)}
-                />
-              </div>
-            ))}
-
-            {/* Loading animation */}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] px-4 py-3 bg-gray-100 text-gray-800 rounded-2xl rounded-bl-none text-sm shadow-sm">
-                  <div className="flex space-x-1 animate-pulse">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                    <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                    <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                  </div>
-                </div>
+      
+      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`mb-4 ${
+              message.role === 'assistant' ? 'text-blue-600' : 'text-gray-800'
+            }`}
+          >
+            <div className="font-semibold mb-1">
+              {message.role === 'assistant' ? 'LeetCoach' : 'You'}
+            </div>
+            <div className="whitespace-pre-wrap">{message.content}</div>
+            {message.buttons && (
+              <div className="mt-2 space-y-2">
+                {message.buttons.map((button, btnIndex) => (
+                  <Button
+                    key={btnIndex}
+                    onClick={button.action}
+                    disabled={isLoading}
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    {button.icon as unknown as React.ReactNode}
+                    {button.text}
+                  </Button>
+                ))}
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
+        ))}
+      </ScrollArea>
 
-          {/* Input */}
-          <form
-            onSubmit={handleSubmit}
-            className="p-4 border-t bg-white flex items-center gap-2"
+      <div className="p-4 border-t space-y-2">
+        <div className="flex gap-2">
+          <Input
+            value={inputMessage}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={chatEnabled ? "Ask a question..." : "Chat will be enabled after solution..."}
+            disabled={isLoading || !chatEnabled}
+            className="flex-1"
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={isLoading || !inputMessage.trim() || !chatEnabled}
+            size="icon"
           >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              placeholder="Ask LeetCoach..."
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition flex items-center gap-1"
-            >
-              <SendHorizonal size={16} />
-            </button>
-          </form>
-        </>
-      )}
-    </div>
+            <Send className="h-4 w-4" /> as unknown as React.ReactNode
+          </Button>
+        </div>
+        {!chatEnabled && (
+          <Button
+            onClick={handleTakeHelp}
+            disabled={isLoading}
+            className="w-full"
+            variant="secondary"
+          >
+            {isLoading ? 'Processing...' : 'Take Help'}
+          </Button>
+        )}
+      </div>
+    </Card>
   );
-};
+}; 

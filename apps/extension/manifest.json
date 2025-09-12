@@ -9,7 +9,7 @@
     },
     "content_scripts": [
       {
-        "js": ["src/content.tsx"],
+        "js": ["src/content/scrape.ts"],
         "matches": ["https://leetcode.com/problems/*"]
       }
     ],

@@ -11,7 +11,6 @@ export const cleanProblemData = (data: string): string => {
     return data.startsWith(prefix) ? data.slice(prefix.length) : data;
 };
 
-// Function to wait for the code editor to appear
 export const waitForEditor = (callback: () => void) => {
     const observer = new MutationObserver((_, obs) => {
         const codeLines = document.querySelectorAll(".view-line");
