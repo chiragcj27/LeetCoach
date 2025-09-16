@@ -129,7 +129,7 @@ const CtaSection = () => {
                   </div>
                   <div className="flex items-center text-gray-300">
                     <Clock className="h-5 w-5 mr-2" />
-                    <span className="text-sm">Launching before August 2025</span>
+                    <span className="text-sm">Launching before November 2025</span>
                   </div>
                 </div>
               </div>
